@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@layer base {
+  :root {
+    /* Dark Mode - Default per instructions */
+    --bg-base: #0F1117;
+    --bg-sidebar: #13151C;
+    --bg-card: #1A1D27;
+    --border-card: #2A2D3A;
+    --primary: #00C896;
+    --primary-hover: #00A87D;
+    --primary-light: #00C89615;
+    --text-main: #E8EAF0;
+    --text-muted: #7A7F99;
+    --hot: #FF4D4D;
+    --hot-light: #FF4D4D18;
+    --warm: #FF9500;
+    --warm-light: #FF950018;
+    --cold: #4D9FFF;
+    --cold-light: #4D9FFF18;
+    --success: #00C896;
+    --warning: #FF9500;
+    --error: #FF4D4D;
+    --sidebar-active: #00C89612;
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.4);
+    --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Light Mode */
+  :root.light {
+    --bg-base: #F4F6FA;
+    --bg-sidebar: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --border-card: #E2E6F0;
+    --primary: #00A87D;
+    --primary-hover: #008A65;
+    --primary-light: #00A87D12;
+    --text-main: #1A1D27;
+    --text-muted: #6B7094;
+    --hot: #E53535;
+    --hot-light: #E5353512;
+    --warm: #D97A00;
+    --warm-light: #D97A0012;
+    --cold: #2B7FD4;
+    --cold-light: #2B7FD412;
+    --success: #00A87D;
+    --warning: #D97A00;
+    --error: #E53535;
+    --sidebar-active: #00A87D10;
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+    --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  body {
+    @apply bg-base text-text-main font-sans antialiased transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border-card rounded-badge;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted;
+  }
+  /* Custom Utilities & Animations */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-300%) rotate(35deg); }
+    100% { transform: translateX(300%) rotate(35deg); }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2.5s infinite linear;
+  }
+
+  @keyframes blink-light {
+    0%, 100% { opacity: 0.6; filter: brightness(1); }
+    50% { opacity: 1; filter: brightness(1.8); transform: scale(1.1); }
+  }
+
+  .animate-blink-fast {
+    animation: blink-light 1s infinite ease-in-out;
+  }
+
+  @keyframes pulse-hot {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
+    70% { transform: scale(1.02); box-shadow: 0 0 15px 5px rgba(255, 77, 77, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+  }
+
+  .animate-pulse-hot {
+    animation: pulse-hot 1.5s infinite;
+  }
+
+  @keyframes scanning {
+    0% { top: -10%; }
+    100% { top: 110%; }
+  }
+
+  .animate-scan {
+    animation: scanning 3s linear infinite;
+  }
+}
