@@ -141,8 +141,14 @@ export const Dashboard: React.FC = () => {
 
   const evolutionData = useMemo(() => {
     const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to })
-    return days.map(day => {
-      const dayLeads = leads.filter(l => format(new Date(l.horario_contato), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
+    const dayLabels = days.map(d => format(d, 'yyyy-MM-dd'))
+    
+    return days.map((day, idx) => {
+      const dayStr = dayLabels[idx]
+      const dayLeads = leads.filter(l => {
+        const dateStr = l.horario_contato ? format(new Date(l.horario_contato), 'yyyy-MM-dd') : format(new Date(l.created_at), 'yyyy-MM-dd')
+        return dateStr === dayStr
+      })
       return {
         date: format(day, 'dd/MM'),
         total: dayLeads.length,
@@ -156,7 +162,8 @@ export const Dashboard: React.FC = () => {
     const counts = [0, 0, 0, 0, 0, 0, 0]
     const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
     filteredLeads.forEach(l => {
-      const day = new Date(l.horario_contato).getDay()
+      const dateToUse = l.horario_contato ? new Date(l.horario_contato) : new Date(l.created_at)
+      const day = dateToUse.getDay()
       counts[day]++
     })
     return counts.map((count, index) => ({
@@ -206,7 +213,11 @@ export const Dashboard: React.FC = () => {
   const recentHotLeads = useMemo(() => {
     return leads
       .filter(l => l.temperatura === 'quente' || (l.score && l.score > 70))
-      .sort((a, b) => new Date(b.horario_contato).getTime() - new Date(a.horario_contato).getTime())
+      .sort((a, b) => {
+        const dateB = new Date(b.horario_contato || b.created_at).getTime()
+        const dateA = new Date(a.horario_contato || a.created_at).getTime()
+        return dateB - dateA
+      })
       .slice(0, 5)
   }, [leads])
 
