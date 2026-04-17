@@ -50,6 +50,18 @@ export const Leads: React.FC = () => {
 
   useEffect(() => {
     fetchLeads()
+    
+    // CONFIGURAÇÃO REALTIME: Ouve mudanças no banco e atualiza na hora
+    const channel = supabase
+      .channel('public:leads')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
+        fetchLeads()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const fetchLeads = async () => {
@@ -117,12 +129,14 @@ export const Leads: React.FC = () => {
         (forwardFilter === 'nao_encaminhado' && !lead.encaminhado_vendedor)
 
       // Date
-      const contactDate = new Date(lead.horario_contato)
-      const matchesDate = contactDate >= dateRange.from && contactDate <= dateRange.to
+      if (selectedRange === 'todos') return matchesSearch && matchesTemp && matchesHours && matchesForward
+
+      const contactDate = new Date(lead.horario_contato || lead.created_at || '')
+      const matchesDate = !isNaN(contactDate.getTime()) && contactDate >= dateRange.from && contactDate <= dateRange.to
 
       return matchesSearch && matchesTemp && matchesHours && matchesForward && matchesDate
     })
-  }, [leads, searchTerm, tempFilter, hoursFilter, forwardFilter, dateRange])
+  }, [leads, searchTerm, tempFilter, hoursFilter, forwardFilter, dateRange, selectedRange])
 
   const sortedLeads = useMemo(() => {
     return [...filteredLeads].sort((a, b) => {
