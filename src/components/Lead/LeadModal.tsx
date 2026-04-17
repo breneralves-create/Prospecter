@@ -90,15 +90,9 @@ export const LeadModal: React.FC<LeadModalProps> = ({
 
       console.log('Dados a serem enviados:', payload)
 
-      const savePromise = lead 
-        ? supabase.from('leads').update(payload).eq('id', lead.id)
-        : supabase.from('leads').insert([payload])
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tempo limite de conexão esgotado. Verifique se o banco de dados está online.')), 15000)
-      )
-
-      const response: any = await Promise.race([savePromise, timeoutPromise])
+      const response: any = lead 
+        ? await supabase.from('leads').update(payload).eq('id', lead.id)
+        : await supabase.from('leads').insert([payload])
 
       if (response.error) {
         console.error('Erro retornado pelo Supabase:', response.error)
