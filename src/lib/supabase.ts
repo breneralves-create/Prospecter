@@ -12,5 +12,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder-error.supabase.co', 
-  supabaseAnonKey || 'placeholder-error'
+  supabaseAnonKey || 'placeholder-error',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    global: {
+      headers: { 'x-application-name': 'prospecter' }
+    }
+  }
 )

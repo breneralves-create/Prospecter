@@ -8,7 +8,8 @@ import {
   Flame,
   Thermometer,
   Snowflake,
-  CheckCircle2
+  CheckCircle2,
+  Trash2
 } from 'lucide-react'
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { supabase } from '../lib/supabase'
@@ -137,6 +138,28 @@ export const Leads: React.FC = () => {
     } else {
       setSortField(field)
       setSortOrder('desc')
+    }
+  }
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation() // Evita abrir o drawer ao clicar no botão
+    if (!window.confirm('Tem certeza que deseja deletar este lead? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      
+      // Atualiza a lista localmente
+      setLeads(prev => prev.filter(l => l.id !== id))
+    } catch (err) {
+      console.error('Erro ao deletar lead:', err)
+      alert('Erro ao excluir lead. Verifique suas permissões de RLS.')
     }
   }
 
@@ -299,6 +322,9 @@ export const Leads: React.FC = () => {
                   <th className="px-6 py-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('horario_contato')}>
                     <div className="flex items-center gap-2">Data Contato <ArrowUpDown size={12} /></div>
                   </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold uppercase text-text-muted tracking-wider">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-card">
@@ -349,6 +375,17 @@ export const Leads: React.FC = () => {
                           {format(new Date(lead.horario_contato), 'HH:mm')} 
                           {lead.dentro_horario_comercial ? ' (Comercial)' : ' (Fora)'}
                         </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={(e) => handleDelete(e, lead.id)}
+                          className="p-2 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all"
+                          title="Excluir Lead"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
