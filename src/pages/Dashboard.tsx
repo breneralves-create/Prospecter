@@ -33,20 +33,21 @@ export const Dashboard: React.FC = () => {
   const { company, refreshCompany } = useCompany()
   const [leads, setLeads] = useState<Lead[]>([])
   const [isToggling, setIsToggling] = useState(false)
-  const [selectedRange, setSelectedRange] = useState<'hoje' | 'ontem' | '7dias' | 'este_mes' | 'mes_passado' | 'este_ano'>('este_mes')
+  // ✅ CORREÇÃO: padrão agora é 'todos' para mostrar TODOS os leads sempre
+  const [selectedRange, setSelectedRange] = useState<'todos' | 'hoje' | 'ontem' | '7dias' | 'este_mes' | 'mes_passado' | 'este_ano'>('todos')
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null)
   
+  // ✅ CORREÇÃO: range inicial abrange tudo
   const [dateRange, setDateRange] = useState({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
+    from: new Date(2000, 0, 1),
+    to: new Date(2100, 0, 1)
   })
 
   useEffect(() => {
     fetchDashboardData()
 
-    // Real-time subscription
     const subscription = supabase
       .channel('dashboard-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
@@ -115,22 +116,23 @@ export const Dashboard: React.FC = () => {
     }
   }
 
+  // ✅ CORREÇÃO: filtro usa created_at como fallback e "todos" mostra tudo
   const filteredLeads = useMemo(() => {
+    if (selectedRange === 'todos') return leads
     return leads.filter(lead => {
-      if (!lead.horario_contato) return true
-      const contactDate = new Date(lead.horario_contato)
+      const dateToUse = lead.horario_contato || lead.created_at
+      if (!dateToUse) return true
+      const contactDate = new Date(dateToUse)
       return contactDate >= dateRange.from && contactDate <= dateRange.to
     })
-  }, [leads, dateRange])
+  }, [leads, dateRange, selectedRange])
 
-  // Helper patterns for data aggregation
   const metrics = useMemo(() => {
     const total = filteredLeads.length
     const quentes = filteredLeads.filter(l => l.temperatura === 'quente').length
     const encaminhados = filteredLeads.filter(l => l.encaminhado_vendedor).length
     const convertidos = filteredLeads.filter(l => l.convertido).length
 
-    // Simulated percentages
     return [
       { label: 'Total de Leads', value: total, icon: Users, color: 'text-text-main', trend: 12 },
       { label: 'Leads Quentes', value: quentes, icon: Flame, color: 'text-hot', trend: 8 },
@@ -146,7 +148,9 @@ export const Dashboard: React.FC = () => {
     return days.map((day, idx) => {
       const dayStr = dayLabels[idx]
       const dayLeads = leads.filter(l => {
-        const dateStr = l.horario_contato ? format(new Date(l.horario_contato), 'yyyy-MM-dd') : format(new Date(l.created_at), 'yyyy-MM-dd')
+        const dateStr = l.horario_contato 
+          ? format(new Date(l.horario_contato), 'yyyy-MM-dd') 
+          : format(new Date(l.created_at), 'yyyy-MM-dd')
         return dateStr === dayStr
       })
       return {
@@ -184,7 +188,7 @@ export const Dashboard: React.FC = () => {
 
   const funnelData = useMemo(() => {
     const statuses = [
-      { id: 'novo', label: 'Novo', color: 'var(--primary-light)' },
+      { id: 'novo_contato', label: 'Novo', color: 'var(--primary-light)' },
       { id: 'em_qualificacao', label: 'Qualif.', color: 'var(--warning)' },
       { id: 'quente', label: 'Quente', color: 'var(--hot)' },
       { id: 'encaminhado', label: 'Encam.', color: 'var(--primary)' },
@@ -225,6 +229,8 @@ export const Dashboard: React.FC = () => {
     setSelectedRange(range)
     const today = new Date()
     switch (range) {
+      case 'todos':
+        setDateRange({ from: new Date(2000, 0, 1), to: new Date(2100, 0, 1) }); break
       case 'hoje':
         setDateRange({ from: startOfDay(today), to: endOfDay(today) }); break
       case 'ontem':
@@ -249,7 +255,7 @@ export const Dashboard: React.FC = () => {
         {/* Filters & Real-time Indicator */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="bg-bg-card p-2 rounded-xl border border-border-card flex flex-wrap gap-2">
-            {(['hoje', 'ontem', '7dias', 'este_mes', 'mes_passado', 'este_ano'] as const).map(range => (
+            {(['todos', 'hoje', 'ontem', '7dias', 'este_mes', 'mes_passado', 'este_ano'] as const).map(range => (
               <button
                 key={range}
                 onClick={() => handleRangeChange(range)}
@@ -259,7 +265,7 @@ export const Dashboard: React.FC = () => {
                   : 'text-text-muted hover:text-text-main hover:bg-bg-base'
                 }`}
               >
-                {range === 'hoje' ? 'Hoje' : range === 'ontem' ? 'Ontem' : range === '7dias' ? '7 dias' : range === 'este_mes' ? 'Este mês' : range === 'mes_passado' ? 'Mês passado' : 'Este ano'}
+                {range === 'todos' ? 'Todos' : range === 'hoje' ? 'Hoje' : range === 'ontem' ? 'Ontem' : range === '7dias' ? '7 dias' : range === 'este_mes' ? 'Este mês' : range === 'mes_passado' ? 'Mês passado' : 'Este ano'}
               </button>
             ))}
           </div>
@@ -296,7 +302,7 @@ export const Dashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Real-Time Funnel Chart (The "Top" one) */}
+        {/* Real-Time Funnel Chart */}
         <Card className="p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4">
              <div className="flex items-center gap-2 bg-success/10 px-3 py-1.5 rounded-full border border-success/20 animate-pulse-hot">
@@ -320,13 +326,7 @@ export const Dashboard: React.FC = () => {
                   cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                   contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '12px' }}
                 />
-                <Bar 
-                  dataKey="value" 
-                  radius={[8, 8, 8, 8]} 
-                  barSize={120}
-                  animationBegin={0}
-                  animationDuration={1500}
-                >
+                <Bar dataKey="value" radius={[8, 8, 8, 8]} barSize={120} animationBegin={0} animationDuration={1500}>
                   {funnelData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} fillOpacity={0.8} />
                   ))}
@@ -382,7 +382,6 @@ export const Dashboard: React.FC = () => {
 
         {/* Side by Side Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Weekday Chart */}
           <Card className="lg:col-span-3 p-6 flex flex-col">
             <div className="mb-6">
               <h3 className="text-lg font-bold text-text-main font-heading">Dias com mais movimento</h3>
@@ -399,7 +398,6 @@ export const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Business Hours Pie */}
           <Card className="lg:col-span-2 p-6 flex flex-col">
             <div className="mb-6">
               <h3 className="text-lg font-bold text-text-main font-heading">Horário dos contatos</h3>
@@ -408,15 +406,7 @@ export const Dashboard: React.FC = () => {
             <div className="h-[200px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
-                    data={businessHoursData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={8}
-                    dataKey="value"
-                  >
+                  <Pie data={businessHoursData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value">
                     {businessHoursData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -443,11 +433,9 @@ export const Dashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* AI Automation Status / Opportunity Banner */}
+        {/* AI Automation Banner */}
         <div className={`p-6 border-l-4 rounded-xl flex items-center gap-6 animate-in fade-in slide-in-from-left-4 duration-700 ${
-          company?.automacao_ativa 
-            ? 'bg-success/10 border-success' 
-            : 'bg-primary/10 border-primary'
+          company?.automacao_ativa ? 'bg-success/10 border-success' : 'bg-primary/10 border-primary'
         }`}>
           <div className={`p-4 rounded-2xl text-white shadow-lg ${
             company?.automacao_ativa ? 'bg-success shadow-success/30' : 'bg-primary shadow-primary/30'
@@ -460,12 +448,9 @@ export const Dashboard: React.FC = () => {
             </h4>
             <p className="text-sm text-text-main/80 leading-relaxed max-w-3xl">
               {company?.automacao_ativa ? (
-                <>O Agente de IA está operando 24/7, qualificando leads e registrando interações automaticamente. Sua equipe comercial recebe apenas o que está pronto para fechar.</>
+                <>O Agente de IA está operando 24/7, qualificando leads e registrando interações automaticamente.</>
               ) : (
-                <>
-                  <strong>{foraHorarioCount} pessoas</strong> tentaram falar com sua empresa fora do horário comercial recentemente. 
-                  Ative a automação total para que o agente responda e qualifique esses leads instantaneamente.
-                </>
+                <><strong>{foraHorarioCount} pessoas</strong> tentaram falar fora do horário comercial. Ative a automação para responder instantaneamente.</>
               )}
             </p>
           </div>
@@ -485,20 +470,19 @@ export const Dashboard: React.FC = () => {
           <Card className="p-6">
             <h3 className="text-lg font-bold text-text-main font-heading mb-6">Produtos mais procurados</h3>
             <div className="space-y-4">
-              {productsData.map((p, idx) => (
+              {productsData.length > 0 ? productsData.map((p, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold px-1">
                     <span className="text-text-main">{p.name}</span>
                     <span className="text-text-muted">{p.value} leads</span>
                   </div>
                   <div className="w-full bg-bg-base h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-1000" 
-                      style={{ width: `${(p.value / (productsData[0]?.value || 1)) * 100}%`, opacity: 1 - idx * 0.1 }} 
-                    />
+                    <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${(p.value / (productsData[0]?.value || 1)) * 100}%`, opacity: 1 - idx * 0.1 }} />
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p className="text-sm text-text-muted text-center py-8">Nenhum produto registrado ainda.</p>
+              )}
             </div>
           </Card>
 
@@ -518,13 +502,6 @@ export const Dashboard: React.FC = () => {
                     className={`py-4 flex items-center justify-between group cursor-pointer relative transition-all hover:bg-primary/5 px-2 rounded-xl border border-transparent hover:border-primary/20 ${lead.score && lead.score > 90 ? 'bg-primary/5 border-primary/10' : ''}`}
                     onClick={() => setSelectedLead(lead)}
                   >
-                     {/* Shimmer for super hot leads */}
-                    {lead.score && lead.score > 90 && (
-                      <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
-                        <div className="absolute inset-x-0 h-[200%] w-[100px] bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-[200px] rotate-[25deg] animate-shimmer" />
-                      </div>
-                    )}
-
                     <div className="flex items-center gap-4 relative z-10">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-primary font-bold shadow-md ${lead.score && lead.score > 90 ? 'bg-primary text-white scale-110 !shadow-primary/30' : 'bg-primary/10'}`}>
                         {lead.nome?.[0] || <Users size={18} />}
@@ -551,7 +528,6 @@ export const Dashboard: React.FC = () => {
                           {lead.score && lead.score > 90 ? 'Urgência Máxima' : 'Lead Quente'}
                         </span>
                       </div>
-                      
                       <button
                         onClick={(e) => handleDelete(e, lead.id)}
                         className="p-2 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all"
