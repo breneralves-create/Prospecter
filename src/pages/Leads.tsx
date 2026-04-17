@@ -60,9 +60,18 @@ export const Leads: React.FC = () => {
         .select('*')
         .order('horario_contato', { ascending: false })
       
-      if (error) throw error
+      if (error) {
+        alert('ERRO SUPABASE: ' + error.message)
+        throw error
+      }
+      
+      console.log('Dados recebidos:', data)
       if (data) setLeads(data as Lead[])
-    } catch (err) {
+      
+      if (data && data.length === 0) {
+        console.warn('O banco retornou ZERO leads. Verifique o RLS ou se você está logado.')
+      }
+    } catch (err: any) {
       console.error('Erro ao buscar leads:', err)
     } finally {
       setLoading(false)
