@@ -73,7 +73,6 @@ export const Leads: React.FC = () => {
         .order('horario_contato', { ascending: false })
       
       if (error) {
-        alert('ERRO SUPABASE: ' + error.message)
         throw error
       }
       
