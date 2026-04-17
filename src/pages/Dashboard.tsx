@@ -42,6 +42,8 @@ export const Dashboard: React.FC = () => {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   })
+  const [dashboardError, setDashboardError] = useState<string | null>(null)
+  const [debugRawData, setDebugRawData] = useState<any>(null)
 
   useEffect(() => {
     fetchDashboardData()
@@ -65,13 +67,18 @@ export const Dashboard: React.FC = () => {
         .from('leads')
         .select('*')
       
+      setDebugRawData({ data, error, urlLength: import.meta.env.VITE_SUPABASE_URL?.length })
+
       if (error) throw error
+
       
       if (data) {
         setLeads(data as Lead[])
+        setDashboardError(null)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao carregar dados do dashboard:', err)
+      setDashboardError(`FALHA NA VERCEL: ${err.message || JSON.stringify(err)}. Isso significa que a Vercel não conseguiu conectar no seu Supabase. Verifique suas Variáveis de Ambiente e faça Redeploy.`)
     }
   }
 
@@ -235,6 +242,20 @@ export const Dashboard: React.FC = () => {
   return (
     <Layout title="Dashboard de Performance">
       <div className="space-y-8">
+        
+        {/* BIG DIAGNOSTIC BANNER */}
+        <div className="bg-zinc-900 border-2 border-primary text-white p-6 rounded-xl font-mono text-xs overflow-auto">
+          <h2 className="text-xl font-bold text-primary mb-2">🕵️ PAINEL DE DIAGNÓSTICO (Visível só agora)</h2>
+          <p className="text-error font-bold mb-4">{dashboardError ? '⚠️ ERRO: ' + dashboardError : 'Nenhum erro de conexão capturado.'}</p>
+          <ul className="space-y-2">
+            <li><strong>Chave URL existe na Vercel?</strong> {debugRawData?.urlLength ? `Sim (${debugRawData.urlLength} caracteres)` : 'NÃO! VAZIO! VÁ NA VERCEL.'}</li>
+            <li><strong>Data recebida bruta do Supabase:</strong> {JSON.stringify(debugRawData?.data || [])}</li>
+            <li><strong>Erro bruto recebido:</strong> {JSON.stringify(debugRawData?.error || 'Nenhum')}</li>
+            <li><strong>Qtd Leads no State:</strong> {leads.length}</li>
+            <li><strong>Qtd Leads Pós-Filtro:</strong> {filteredLeads?.length}</li>
+          </ul>
+        </div>
+
         {/* Filters & Real-time Indicator */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="bg-bg-card p-2 rounded-xl border border-border-card flex flex-wrap gap-2">
