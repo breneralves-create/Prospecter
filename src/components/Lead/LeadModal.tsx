@@ -84,7 +84,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       const payload = {
         ...formData,
         status: lead ? lead.status : 'novo_contato',
-        horario_contato: lead ? lead.horario_contato : new Date().toISOString(),
+        horario_contato: lead?.horario_contato ?? new Date().toISOString(),
         encaminhado_vendedor: lead ? lead.encaminhado_vendedor : false
       }
 
