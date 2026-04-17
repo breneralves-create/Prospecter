@@ -4,7 +4,13 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials missing. Check your .env file.')
+  console.error('❌ ERRO CRÍTICO: Variáveis de ambiente do Supabase não encontradas!');
+  // Não podemos travar o app, mas vamos avisar no console de forma impossível de ignorar
+} else {
+  console.log('✅ Supabase: URL e Chave encontradas.');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder-error.supabase.co', 
+  supabaseAnonKey || 'placeholder-error'
+)

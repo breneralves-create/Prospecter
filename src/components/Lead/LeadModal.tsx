@@ -29,6 +29,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   lead
 }) => {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     nome: '',
     whatsapp: '',
@@ -39,6 +40,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   })
 
   useEffect(() => {
+    setError(null)
     if (lead) {
       setFormData({
         nome: lead.nome || '',
@@ -63,8 +65,22 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
+
+    // Validação básica local antes de enviar
+    const onlyNumbers = formData.whatsapp.replace(/\D/g, '')
+    if (onlyNumbers.length < 8 && !formData.whatsapp.includes('@')) {
+       setError('O WhatsApp parece inválido. Insira apenas números com DDD.')
+       setLoading(false)
+       return
+    }
 
     try {
+      // Verifica se a URL do Supabase é válida ou se é um placeholder
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+        throw new Error('As chaves do Supabase não foram configuradas na Vercel. Adicione VITE_SUPABASE_URL no painel do projeto.')
+      }
+
       const payload = {
         ...formData,
         status: lead ? lead.status : 'novo_contato',
@@ -72,24 +88,30 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         encaminhado_vendedor: lead ? lead.encaminhado_vendedor : false
       }
 
-      if (lead) {
-        const { error } = await supabase
-          .from('leads')
-          .update(payload)
-          .eq('id', lead.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('leads')
-          .insert([payload])
-        if (error) throw error
+      console.log('Dados a serem enviados:', payload)
+
+      const savePromise = lead 
+        ? supabase.from('leads').update(payload).eq('id', lead.id)
+        : supabase.from('leads').insert([payload])
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tempo limite de conexão esgotado. Verifique se o banco de dados está online.')), 15000)
+      )
+
+      const response: any = await Promise.race([savePromise, timeoutPromise])
+
+      if (response.error) {
+        console.error('Erro retornado pelo Supabase:', response.error)
+        // Se o erro for que a coluna não existe, a mensagem será clara aqui
+        throw new Error(response.error.message || 'Erro ao salvar dados.')
       }
 
+      console.log('Sucesso ao salvar!')
       onSuccess()
       onClose()
-    } catch (error) {
-      console.error('Erro ao salvar lead:', error)
-      alert('Erro ao salvar lead. Verifique os dados e tente novamente.')
+    } catch (err: any) {
+      console.error('Falha no cadastro de lead:', err)
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -108,24 +130,30 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="p-3 bg-error/10 border border-error/20 rounded-lg text-error text-xs font-bold animate-shake">
+            ⚠️ {error}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold uppercase text-text-muted mb-2">WhatsApp *</label>
+            <label className="block text-xs font-bold uppercase text-text-muted mb-2">WhatsApp / Telefone *</label>
             <Input
               name="whatsapp"
               value={formData.whatsapp}
               onChange={handleChange}
-              placeholder="Ex: 5527999990000"
+              placeholder="Ex: 31999998888 (Apenas números)"
               required
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold uppercase text-text-muted mb-2">Nome Completo</label>
+            <label className="block text-xs font-bold uppercase text-text-muted mb-2">Nome Completo do Cliente</label>
             <Input
               name="nome"
               value={formData.nome}
               onChange={handleChange}
-              placeholder="Nome do lead"
+              placeholder="Digite o nome completo"
             />
           </div>
           <div>
@@ -145,7 +173,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               name="produto_interesse"
               value={formData.produto_interesse}
               onChange={handleChange}
-              placeholder="Ex: Produto X"
+              placeholder="Ex: Mentoria, Produto X..."
             />
           </div>
           <div className="md:col-span-2">
@@ -165,7 +193,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               onChange={handleChange}
               rows={3}
               className="w-full bg-bg-base border border-border-card rounded-button px-4 py-3 text-text-main focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none text-sm"
-              placeholder="Digite observações importantes sobre o lead..."
+              placeholder="Observações complementares..."
             />
           </div>
         </div>
@@ -180,5 +208,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         </div>
       </form>
     </Modal>
+
   )
 }
