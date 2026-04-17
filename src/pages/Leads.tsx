@@ -36,10 +36,10 @@ export const Leads: React.FC = () => {
   const [tempFilter, setTempFilter] = useState<string[]>([])
   const [hoursFilter, setHoursFilter] = useState<'todos' | 'comercial' | 'fora'>('todos')
   const [forwardFilter, setForwardFilter] = useState<'todos' | 'encaminhado' | 'nao_encaminhado'>('todos')
-  const [selectedRange, setSelectedRange] = useState<'este_mes' | 'mes_passado' | 'hoje' | 'todos'>('este_mes')
+  const [selectedRange, setSelectedRange] = useState<'este_mes' | 'mes_passado' | 'hoje' | 'todos'>('todos')
   const [dateRange, setDateRange] = useState({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
+    from: new Date(2000, 0, 1),
+    to: new Date(2100, 0, 1)
   })
 
   // Sorting and Pagination
