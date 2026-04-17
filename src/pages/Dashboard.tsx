@@ -8,7 +8,8 @@ import {
   TrendingDown,
   Bot,
   ArrowRight,
-  Zap
+  Zap,
+  Trash2
 } from 'lucide-react'
 import { 
   AreaChart, Area, Line,
@@ -91,8 +92,32 @@ export const Dashboard: React.FC = () => {
     }
   }
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation() 
+    if (!window.confirm('Tem certeza que deseja deletar este lead? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', id)
+
+      if (!error) {
+        await fetchDashboardData()
+      } else {
+        throw error
+      }
+    } catch (err) {
+      console.error('Erro ao deletar lead:', err)
+      alert('Erro ao excluir lead. Verifique as permissões.')
+    }
+  }
+
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
+      if (!lead.horario_contato) return true
       const contactDate = new Date(lead.horario_contato)
       return contactDate >= dateRange.from && contactDate <= dateRange.to
     })
@@ -499,20 +524,30 @@ export const Dashboard: React.FC = () => {
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Badge variant="muted" className="text-[10px] py-0">{lead.origem || 'WhatsApp'}</Badge>
-                          <span className="text-[10px] text-text-muted italic">• {formatDistanceToNow(new Date(lead.horario_contato), { addSuffix: true, locale: ptBR })}</span>
+                          <span className="text-[10px] text-text-muted italic">• {formatDistanceToNow(new Date(lead.horario_contato || lead.created_at || new Date()), { addSuffix: true, locale: ptBR })}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right relative z-10">
-                      <div className="flex items-center justify-end gap-1.5 mb-1">
-                        <span className={`text-[10px] font-black tabular-nums transition-colors ${lead.score && lead.score > 90 ? 'text-primary animate-pulse' : 'text-text-muted'}`}>
-                          {lead.score || 0}%
+                    <div className="flex items-center gap-3 relative z-10">
+                      <div className="text-right">
+                        <div className="flex items-center justify-end gap-1.5 mb-1">
+                          <span className={`text-[10px] font-black tabular-nums transition-colors ${lead.score && lead.score > 90 ? 'text-primary animate-pulse' : 'text-text-muted'}`}>
+                            {lead.score || 0}%
+                          </span>
+                          <ScoreBar score={lead.score || 0} className="w-16 h-1" />
+                        </div>
+                        <span className={`text-[9px] font-black uppercase tracking-tighter ${lead.score && lead.score > 90 ? 'text-primary' : 'text-hot'}`}>
+                          {lead.score && lead.score > 90 ? 'Urgência Máxima' : 'Lead Quente'}
                         </span>
-                        <ScoreBar score={lead.score || 0} className="w-16 h-1" />
                       </div>
-                      <span className={`text-[9px] font-black uppercase tracking-tighter ${lead.score && lead.score > 90 ? 'text-primary' : 'text-hot'}`}>
-                        {lead.score && lead.score > 90 ? 'Urgência Máxima' : 'Lead Quente'}
-                      </span>
+                      
+                      <button
+                        onClick={(e) => handleDelete(e, lead.id)}
+                        className="p-2 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all"
+                        title="Excluir Lead"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 ))
