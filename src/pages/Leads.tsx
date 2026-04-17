@@ -70,7 +70,7 @@ export const Leads: React.FC = () => {
       const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .order('horario_contato', { ascending: false })
+        .order('created_at', { ascending: false })
       
       if (error) {
         throw error
@@ -392,9 +392,12 @@ export const Leads: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs text-text-muted font-medium">
-                        {format(new Date(lead.horario_contato), 'dd/MM/yyyy')}
+                        {lead.horario_contato 
+                          ? format(new Date(lead.horario_contato), 'dd/MM/yyyy')
+                          : <span className="opacity-30">—</span>
+                        }
                         <span className="block text-[10px] opacity-70 mt-0.5">
-                          {format(new Date(lead.horario_contato), 'HH:mm')} 
+                          {lead.horario_contato && format(new Date(lead.horario_contato), 'HH:mm')}
                           {lead.dentro_horario_comercial ? ' (Comercial)' : ' (Fora)'}
                         </span>
                       </div>
