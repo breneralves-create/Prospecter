@@ -95,10 +95,7 @@ export const Dashboard: React.FC = () => {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation() 
-    if (!window.confirm('Tem certeza que deseja deletar este lead? Esta ação não pode ser desfeita.')) {
-      return
-    }
-
+    
     try {
       const { error } = await supabase
         .from('leads')

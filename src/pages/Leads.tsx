@@ -165,10 +165,7 @@ export const Leads: React.FC = () => {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation() // Evita abrir o drawer ao clicar no botão
-    if (!window.confirm('Tem certeza que deseja deletar este lead? Esta ação não pode ser desfeita.')) {
-      return
-    }
-
+    
     try {
       const { error } = await supabase
         .from('leads')

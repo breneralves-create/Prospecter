@@ -62,6 +62,15 @@
     @apply bg-base text-text-main font-sans antialiased transition-colors duration-200;
   }
 
+  button, a, [role="button"], input[type="checkbox"], input[type="radio"], select, .cursor-pointer {
+    cursor: pointer;
+  }
+
+  /* Aplica o cursor de mão em qualquer Card ou elemento que tenha efeitos de hover ou seja interativo */
+  .card, [class*="bg-hot/5"], [class*="bg-warm/5"], [class*="bg-cold/5"], .group\/card, [onClick] {
+    cursor: pointer;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
   }

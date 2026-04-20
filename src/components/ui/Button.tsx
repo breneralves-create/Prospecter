@@ -19,7 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   as: Tag,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed'
+  const baseStyles = 'inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
 
   const variants: Record<string, string> = {
     primary: 'bg-primary text-[#0F1117] hover:opacity-90 shadow-sm',
