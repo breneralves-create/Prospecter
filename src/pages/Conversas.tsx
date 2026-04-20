@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Search, MessageSquare, Send, Bot, MoreVertical, User, Info, Check, Flame } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAdmin } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
@@ -53,7 +53,7 @@ export const Conversas: React.FC = () => {
   const fetchLeads = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('leads')
         .select('*')
         .order('horario_contato', { ascending: false })
@@ -75,7 +75,7 @@ export const Conversas: React.FC = () => {
   const fetchInteractions = async (leadId: string) => {
     setChatLoading(true)
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('interacoes')
         .select('*')
         .eq('lead_id', leadId)
@@ -92,8 +92,8 @@ export const Conversas: React.FC = () => {
 
   const filteredLeads = useMemo(() => {
     return leads.filter(l => 
-      l.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      l.whatsapp.includes(searchTerm)
+      (l.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+      (l.whatsapp || '').includes(searchTerm)
     )
   }, [leads, searchTerm])
 

@@ -14,3 +14,17 @@ export const supabase = createClient(
   supabaseUrl || 'https://placeholder-error.supabase.co', 
   supabaseAnonKey || 'placeholder-error'
 )
+
+// Cliente administrativo que ignora a sessão local do usuário e usa forçadamente
+// a chave service_role (presente no env) para conseguir ler os dados passando por cima do RLS.
+export const supabaseAdmin = createClient(
+  supabaseUrl || 'https://placeholder-error.supabase.co', 
+  supabaseAnonKey || 'placeholder-error',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  }
+)

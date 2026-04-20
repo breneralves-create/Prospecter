@@ -12,7 +12,7 @@ import {
   Trash2
 } from 'lucide-react'
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAdmin } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -67,7 +67,7 @@ export const Leads: React.FC = () => {
   const fetchLeads = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false })
@@ -109,8 +109,8 @@ export const Leads: React.FC = () => {
     return leads.filter(lead => {
       // Search
       const matchesSearch = 
-        (lead.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || false) || 
-        lead.whatsapp.includes(searchTerm)
+        ((lead.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase())) || 
+        (lead.whatsapp || '').includes(searchTerm)
       
       // Temperature
       const matchesTemp = tempFilter.length === 0 || (lead.temperatura && tempFilter.includes(lead.temperatura))

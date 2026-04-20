@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabaseAdmin } from '../../lib/supabase'
 import type { Lead } from '../../types'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
@@ -91,8 +91,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       console.log('Dados a serem enviados:', payload)
 
       const response: any = lead 
-        ? await supabase.from('leads').update(payload).eq('id', lead.id)
-        : await supabase.from('leads').insert([payload])
+        ? await supabaseAdmin.from('leads').update(payload).eq('id', lead.id).select().single()
+        : await supabaseAdmin.from('leads').insert([payload]).select().single()
 
       if (response.error) {
         console.error('Erro retornado pelo Supabase:', response.error)

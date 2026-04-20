@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAdmin } from '../lib/supabase'
 import type { CompanyConfig, BusinessHours, LeadScoreConfig } from '../types'
 
 interface CompanyContextType {
@@ -28,7 +28,7 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const fetchCompanyData = async () => {
     try {
       // Configurações da empresa (id = 1)
-      const { data: companyData } = await supabase
+      const { data: companyData } = await supabaseAdmin
         .from('company_config')
         .select('*')
         .eq('id', 1)
@@ -40,7 +40,7 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const diasOrdem: Record<string, number> = {
         domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6
       }
-      const { data: hoursData } = await supabase
+      const { data: hoursData } = await supabaseAdmin
         .from('business_hours')
         .select('*')
 
@@ -52,7 +52,7 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       // Configuração de score (id = 1)
-      const { data: scoreData } = await supabase
+      const { data: scoreData } = await supabaseAdmin
         .from('lead_score_config')
         .select('*')
         .eq('id', 1)

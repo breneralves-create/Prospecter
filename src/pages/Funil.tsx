@@ -10,7 +10,7 @@ import {
   Zap,
   Flame
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAdmin } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import type { Lead, LeadStatus } from '../types'
 import { Card } from '../components/ui/Card'
@@ -56,7 +56,7 @@ export const Funil: React.FC = () => {
 
   const fetchHotLeads = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('leads')
         .select('*')
         .in('status', COLUMNS.map(c => c.id))
@@ -106,8 +106,8 @@ export const Funil: React.FC = () => {
   }
 
   const filteredLeads = leads.filter(l => 
-    l.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    l.whatsapp.includes(searchTerm)
+    (l.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+    (l.whatsapp || '').includes(searchTerm)
   )
 
   const getLeadsByStatus = (status: LeadStatus) => {
