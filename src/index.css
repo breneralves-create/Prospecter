@@ -67,7 +67,7 @@
   }
 
   /* Aplica o cursor de mão em qualquer Card ou elemento que tenha efeitos de hover ou seja interativo */
-  .card, [class*="bg-hot/5"], [class*="bg-warm/5"], [class*="bg-cold/5"], .group\/card, [onClick] {
+  .card, tr, [class*="bg-hot/5"], [class*="bg-warm/5"], [class*="bg-cold/5"], .group, .group\/card, [onClick] {
     cursor: pointer;
   }
 

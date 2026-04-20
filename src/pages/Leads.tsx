@@ -22,6 +22,7 @@ import { ScoreBar } from '../components/ui/ScoreBar'
 import { LeadTemperature } from '../components/ui/LeadTemperature'
 import { DrawerLead } from '../components/Lead/DrawerLead'
 import { LeadModal } from '../components/Lead/LeadModal'
+import { ConfirmModal } from '../components/ui/ConfirmModal'
 import type { Lead } from '../types'
 
 export const Leads: React.FC = () => {
@@ -30,6 +31,11 @@ export const Leads: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null)
+  
+  // Delete Modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [leadToDelete, setLeadToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('')
@@ -163,22 +169,33 @@ export const Leads: React.FC = () => {
     }
   }
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation() // Evita abrir o drawer ao clicar no botão
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setLeadToDelete(id)
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!leadToDelete) return
     
+    setIsDeleting(true)
     try {
       const { error } = await supabase
         .from('leads')
         .delete()
-        .eq('id', id)
+        .eq('id', leadToDelete)
 
       if (error) throw error
       
       // Atualiza a lista localmente
-      setLeads(prev => prev.filter(l => l.id !== id))
+      setLeads(prev => prev.filter(l => l.id !== leadToDelete))
+      setIsDeleteModalOpen(false)
     } catch (err) {
       console.error('Erro ao deletar lead:', err)
       alert('Erro ao excluir lead. Verifique suas permissões de RLS.')
+    } finally {
+      setIsDeleting(false)
+      setLeadToDelete(null)
     }
   }
 
@@ -491,6 +508,15 @@ export const Leads: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchLeads}
         lead={leadToEdit}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Deletar este Lead?"
+        description="Tem certeza que deseja deletar este lead? Esta ação não pode ser desfeita e removerá todo o histórico."
+        isLoading={isDeleting}
       />
     </Layout>
   )

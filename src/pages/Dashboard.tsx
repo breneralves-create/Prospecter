@@ -25,6 +25,7 @@ import { Button } from '../components/ui/Button'
 import { ScoreBar } from '../components/ui/ScoreBar'
 import { DrawerLead } from '../components/Lead/DrawerLead'
 import { LeadModal } from '../components/Lead/LeadModal'
+import { ConfirmModal } from '../components/ui/ConfirmModal'
 import { useCompany } from '../contexts/CompanyContext'
 import type { Lead } from '../types'
 import { Badge } from '../components/ui/Badge'
@@ -38,6 +39,11 @@ export const Dashboard: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null)
+  
+  // Delete Modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [leadToDelete, setLeadToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   // ✅ CORREÇÃO: range inicial abrange tudo
   const [dateRange, setDateRange] = useState({
@@ -93,23 +99,33 @@ export const Dashboard: React.FC = () => {
     }
   }
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation() 
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setLeadToDelete(id)
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!leadToDelete) return
     
+    setIsDeleting(true)
     try {
       const { error } = await supabase
         .from('leads')
         .delete()
-        .eq('id', id)
+        .eq('id', leadToDelete)
 
-      if (!error) {
-        await fetchDashboardData()
-      } else {
-        throw error
-      }
+      if (error) throw error
+      
+      // Atualiza a lista localmente
+      setLeads(prev => prev.filter(l => l.id !== leadToDelete))
+      setIsDeleteModalOpen(false)
     } catch (err) {
       console.error('Erro ao deletar lead:', err)
       alert('Erro ao excluir lead. Verifique as permissões.')
+    } finally {
+      setIsDeleting(false)
+      setLeadToDelete(null)
     }
   }
 
@@ -563,6 +579,15 @@ export const Dashboard: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchDashboardData}
         lead={leadToEdit}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Deletar este Lead?"
+        description="Tem certeza que deseja deletar este lead? Esta ação não pode ser desfeita e removerá todo o histórico."
+        isLoading={isDeleting}
       />
     </Layout>
   )
