@@ -18,7 +18,7 @@ import {
 } from 'recharts'
 import { format, subDays, startOfMonth, endOfMonth, startOfDay, endOfDay, eachDayOfInterval, subMonths, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { supabase, supabaseAdmin } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'

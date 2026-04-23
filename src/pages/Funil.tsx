@@ -10,7 +10,7 @@ import {
   Zap,
   Flame
 } from 'lucide-react'
-import { supabase, supabaseAdmin } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import type { Lead, LeadStatus } from '../types'
 import { Card } from '../components/ui/Card'
