@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { supabaseAdmin } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'   // ← CORRIGIDO: era supabaseAdmin, faltava supabase
 import type { Lead } from '../../types'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface LeadModalProps {
   isOpen: boolean
@@ -12,7 +13,7 @@ interface LeadModalProps {
   lead?: Lead | null
 }
 
-const ORIGENS: Array<{label: string; value: string}> = [
+const ORIGENS: Array<{ label: string; value: string }> = [
   { label: 'WhatsApp Direto', value: 'whatsapp_direto' },
   { label: 'Instagram', value: 'instagram' },
   { label: 'Google', value: 'google' },
@@ -28,6 +29,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   onSuccess,
   lead
 }) => {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -67,40 +69,58 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     setLoading(true)
     setError(null)
 
-    // Validação básica local antes de enviar
+    // Validação local do WhatsApp
     const onlyNumbers = formData.whatsapp.replace(/\D/g, '')
     if (onlyNumbers.length < 8 && !formData.whatsapp.includes('@')) {
-       setError('O WhatsApp parece inválido. Insira apenas números com DDD.')
-       setLoading(false)
-       return
+      setError('O WhatsApp parece inválido. Insira apenas números com DDD.')
+      setLoading(false)
+      return
     }
 
     try {
-      // Verifica se a URL do Supabase é válida ou se é um placeholder
       if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
-        throw new Error('As chaves do Supabase não foram configuradas na Vercel. Adicione VITE_SUPABASE_URL no painel do projeto.')
+        throw new Error('As chaves do Supabase não foram configuradas. Adicione VITE_SUPABASE_URL no painel da Vercel.')
       }
+
+      // ── NOVO: Verificar duplicata de WhatsApp antes de inserir ──
+      if (!lead) {
+        const { data: existing } = await supabase
+          .from('leads')
+          .select('id, nome')
+          .eq('whatsapp', formData.whatsapp.replace(/\D/g, ''))
+          .maybeSingle()
+
+        if (existing) {
+          setError(
+            `Este WhatsApp já está cadastrado${existing.nome ? ` para "${existing.nome}"` : ''}. Edite o lead existente.`
+          )
+          setLoading(false)
+          return
+        }
+      }
+      // ────────────────────────────────────────────────────────────
 
       const payload = {
         ...formData,
+        whatsapp: formData.whatsapp.replace(/\D/g, ''), // salva só números
         status: lead ? lead.status : 'novo_contato',
         horario_contato: lead?.horario_contato ?? new Date().toISOString(),
-        encaminhado_vendedor: lead ? lead.encaminhado_vendedor : false
+        encaminhado_vendedor: lead ? lead.encaminhado_vendedor : false,
+        usuario_id: lead ? lead.usuario_id : user?.id
       }
 
-      console.log('Dados a serem enviados:', payload)
-
-      const response: any = lead 
-        ? await supabaseAdmin.from('leads').update(payload).eq('id', lead.id).select().single()
-        : await supabaseAdmin.from('leads').insert([payload]).select().single()
+      const response: any = lead
+        ? await supabase.from('leads').update(payload).eq('id', lead.id).select().single()
+        : await supabase.from('leads').insert([payload]).select().single()
 
       if (response.error) {
-        console.error('Erro retornado pelo Supabase:', response.error)
-        // Se o erro for que a coluna não existe, a mensagem será clara aqui
+        // Trata o erro de chave duplicada vindo do banco (fallback)
+        if (response.error.code === '23505') {
+          throw new Error('Este WhatsApp já está cadastrado. Verifique os leads existentes.')
+        }
         throw new Error(response.error.message || 'Erro ao salvar dados.')
       }
 
-      console.log('Sucesso ao salvar!')
       onSuccess()
       onClose()
     } catch (err: any) {
@@ -202,6 +222,5 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         </div>
       </form>
     </Modal>
-
   )
 }

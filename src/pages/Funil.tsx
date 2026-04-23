@@ -56,7 +56,7 @@ export const Funil: React.FC = () => {
 
   const fetchHotLeads = async () => {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
         .in('status', COLUMNS.map(c => c.id))

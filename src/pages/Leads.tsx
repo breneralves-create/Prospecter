@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { 
-  Users, 
-  Search, 
-  ArrowUpDown, 
-  Download, 
+import {
+  Users,
+  Search,
+  ArrowUpDown,
+  Download,
   Plus,
   Flame,
   Thermometer,
@@ -31,7 +31,7 @@ export const Leads: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null)
-  
+
   // Delete Modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null)
@@ -56,8 +56,7 @@ export const Leads: React.FC = () => {
 
   useEffect(() => {
     fetchLeads()
-    
-    // CONFIGURAÇÃO REALTIME: Ouve mudanças no banco e atualiza na hora
+
     const channel = supabase
       .channel('public:leads')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
@@ -73,18 +72,15 @@ export const Leads: React.FC = () => {
   const fetchLeads = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .order('created_at', { ascending: false })
-      
-      if (error) {
-        throw error
-      }
-      
-      console.log('Dados recebidos:', data)
+        .order('horario_contato', { ascending: false })
+
+      if (error) throw error
+
       if (data) setLeads(data as Lead[])
-      
+
       if (data && data.length === 0) {
         console.warn('O banco retornou ZERO leads. Verifique o RLS ou se você está logado.')
       }
@@ -113,27 +109,22 @@ export const Leads: React.FC = () => {
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
-      // Search
-      const matchesSearch = 
-        ((lead.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase())) || 
+      const matchesSearch =
+        ((lead.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase())) ||
         (lead.whatsapp || '').includes(searchTerm)
-      
-      // Temperature
+
       const matchesTemp = tempFilter.length === 0 || (lead.temperatura && tempFilter.includes(lead.temperatura))
-      
-      // Hours
-      const matchesHours = 
-        hoursFilter === 'todos' || 
+
+      const matchesHours =
+        hoursFilter === 'todos' ||
         (hoursFilter === 'comercial' && lead.dentro_horario_comercial) ||
         (hoursFilter === 'fora' && !lead.dentro_horario_comercial)
 
-      // Forwarding
-      const matchesForward = 
+      const matchesForward =
         forwardFilter === 'todos' ||
         (forwardFilter === 'encaminhado' && lead.encaminhado_vendedor) ||
         (forwardFilter === 'nao_encaminhado' && !lead.encaminhado_vendedor)
 
-      // Date
       if (selectedRange === 'todos') return matchesSearch && matchesTemp && matchesHours && matchesForward
 
       const contactDate = new Date(lead.horario_contato || lead.created_at || '')
@@ -175,24 +166,24 @@ export const Leads: React.FC = () => {
     setIsDeleteModalOpen(true)
   }
 
+  // ✅ CORRIGIDO: usa supabaseAdmin para contornar o RLS no delete
   const confirmDelete = async () => {
     if (!leadToDelete) return
-    
+
     setIsDeleting(true)
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('leads')
         .delete()
         .eq('id', leadToDelete)
 
       if (error) throw error
-      
-      // Atualiza a lista localmente
+
       setLeads(prev => prev.filter(l => l.id !== leadToDelete))
       setIsDeleteModalOpen(false)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao deletar lead:', err)
-      alert('Erro ao excluir lead. Verifique suas permissões de RLS.')
+      alert(`Erro ao excluir lead: ${err.message || 'Verifique suas permissões de RLS.'}`)
     } finally {
       setIsDeleting(false)
       setLeadToDelete(null)
@@ -201,10 +192,10 @@ export const Leads: React.FC = () => {
 
   const exportCSV = () => {
     const headers = "Nome,WhatsApp,Score,Temperatura,Produto,Origem,Status,Data\n"
-    const rows = sortedLeads.map(l => 
+    const rows = sortedLeads.map(l =>
       `"${l.nome || 'Sem nome'}","${l.whatsapp}",${l.score || 0},"${l.temperatura || ''}","${l.produto_interesse || ''}","${l.origem || ''}","${l.status}","${l.horario_contato}"`
     ).join("\n")
-    
+
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement("a")
     const url = URL.createObjectURL(blob)
@@ -266,11 +257,10 @@ export const Leads: React.FC = () => {
                 <button
                   key={range}
                   onClick={() => handleRangeChange(range)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedRange === range 
-                    ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                    : 'text-text-muted hover:text-text-main hover:bg-bg-base'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selectedRange === range
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'text-text-muted hover:text-text-main hover:bg-bg-base'
+                    }`}
                 >
                   {range === 'hoje' ? 'Hoje' : range === 'este_mes' ? 'Este mês' : range === 'mes_passado' ? 'Mês passado' : 'Todos'}
                 </button>
@@ -289,9 +279,9 @@ export const Leads: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-              <Input 
-                className="pl-10" 
-                placeholder="Buscar por nome ou WhatsApp..." 
+              <Input
+                className="pl-10"
+                placeholder="Buscar por nome ou WhatsApp..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -302,19 +292,18 @@ export const Leads: React.FC = () => {
                 <button
                   key={t}
                   onClick={() => setTempFilter(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 ${
-                    tempFilter.includes(t) 
-                    ? (t === 'quente' ? 'bg-hot text-white' : t === 'morno' ? 'bg-warm text-white' : 'bg-cold text-white')
-                    : 'text-text-muted hover:text-text-main'
-                  }`}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 ${tempFilter.includes(t)
+                      ? (t === 'quente' ? 'bg-hot text-white' : t === 'morno' ? 'bg-warm text-white' : 'bg-cold text-white')
+                      : 'text-text-muted hover:text-text-main'
+                    }`}
                 >
-                  {t === 'quente' ? <Flame size={12}/> : t === 'morno' ? <Thermometer size={12}/> : <Snowflake size={12}/>}
+                  {t === 'quente' ? <Flame size={12} /> : t === 'morno' ? <Thermometer size={12} /> : <Snowflake size={12} />}
                   {t}
                 </button>
               ))}
             </div>
 
-            <select 
+            <select
               className="bg-bg-base border border-border-card rounded-button px-4 py-2.5 text-xs font-medium text-text-main"
               value={hoursFilter}
               onChange={e => setHoursFilter(e.target.value as any)}
@@ -324,7 +313,7 @@ export const Leads: React.FC = () => {
               <option value="fora">Fora do Horário</option>
             </select>
 
-            <select 
+            <select
               className="bg-bg-base border border-border-card rounded-button px-4 py-2.5 text-xs font-medium text-text-main"
               value={forwardFilter}
               onChange={e => setForwardFilter(e.target.value as any)}
@@ -336,7 +325,7 @@ export const Leads: React.FC = () => {
           </div>
         </div>
 
-        {/* Table container */}
+        {/* Table */}
         <div className="bg-bg-card rounded-2xl border border-border-card overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -365,8 +354,8 @@ export const Leads: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-border-card">
                 {paginatedLeads.map(lead => (
-                  <tr 
-                    key={lead.id} 
+                  <tr
+                    key={lead.id}
                     className="hover:bg-bg-base/30 transition-colors cursor-pointer group"
                     onClick={() => setSelectedLead(lead)}
                   >
@@ -406,7 +395,7 @@ export const Leads: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs text-text-muted font-medium">
-                        {lead.horario_contato 
+                        {lead.horario_contato
                           ? format(new Date(lead.horario_contato), 'dd/MM/yyyy')
                           : <span className="opacity-30">—</span>
                         }
@@ -433,7 +422,6 @@ export const Leads: React.FC = () => {
             </table>
           </div>
 
-          {/* Empty State */}
           {!loading && paginatedLeads.length === 0 && (
             <div className="p-20 text-center space-y-4">
               <div className="p-4 bg-bg-base rounded-full inline-block text-text-muted/20">
@@ -449,19 +437,13 @@ export const Leads: React.FC = () => {
             </div>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="px-6 py-4 bg-bg-base/30 border-t border-border-card flex items-center justify-between">
               <div className="text-xs text-text-muted">
                 Mostrando <span className="font-bold text-text-main">{(currentPage - 1) * pageSize + 1}</span> a <span className="font-bold text-text-main">{Math.min(currentPage * pageSize, sortedLeads.length)}</span> de <span className="font-bold text-text-main">{sortedLeads.length}</span> resultados
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
                   Anterior
                 </Button>
                 <div className="flex items-center gap-1">
@@ -469,20 +451,14 @@ export const Leads: React.FC = () => {
                     <button
                       key={i}
                       onClick={() => setCurrentPage(i + 1)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                        currentPage === i + 1 ? 'bg-primary text-white' : 'hover:bg-bg-base text-text-muted'
-                      }`}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentPage === i + 1 ? 'bg-primary text-white' : 'hover:bg-bg-base text-text-muted'
+                        }`}
                     >
                       {i + 1}
                     </button>
                   ))}
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
                   Próxima
                 </Button>
               </div>
@@ -491,7 +467,7 @@ export const Leads: React.FC = () => {
         </div>
       </div>
 
-      <DrawerLead 
+      <DrawerLead
         lead={selectedLead}
         isOpen={!!selectedLead}
         onClose={() => setSelectedLead(null)}
@@ -499,7 +475,7 @@ export const Leads: React.FC = () => {
         onEdit={(lead) => {
           setLeadToEdit(lead)
           setIsModalOpen(true)
-          setSelectedLead(null) // Close drawer when opening modal
+          setSelectedLead(null)
         }}
       />
 

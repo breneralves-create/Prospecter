@@ -53,7 +53,7 @@ export const Conversas: React.FC = () => {
   const fetchLeads = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
         .order('horario_contato', { ascending: false })
@@ -75,7 +75,7 @@ export const Conversas: React.FC = () => {
   const fetchInteractions = async (leadId: string) => {
     setChatLoading(true)
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('interacoes')
         .select('*')
         .eq('lead_id', leadId)

@@ -80,6 +80,9 @@ export interface Lead {
   // Follow-up (espelho)
   follow_up_agendado: boolean
   data_follow_up: string | null
+
+  // Segurança
+  usuario_id: string | null
 }
 
 export interface Interacao {
