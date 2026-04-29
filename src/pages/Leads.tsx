@@ -403,7 +403,11 @@ export const Leads: React.FC = () => {
                         }
                         <span className="block text-[10px] opacity-70 mt-0.5">
                           {lead.horario_contato && format(new Date(lead.horario_contato), 'HH:mm')}
-                          {lead.dentro_horario_comercial ? ' (Comercial)' : ' (Fora)'}
+                          {lead.dentro_horario_comercial ? (
+                            <span className="text-primary/80"> (Comercial)</span>
+                          ) : (
+                            <span className="text-warning/80"> (Fora do Horário)</span>
+                          )}
                         </span>
                       </div>
                     </td>
