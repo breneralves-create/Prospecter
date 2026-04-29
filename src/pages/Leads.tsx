@@ -310,9 +310,9 @@ export const Leads: React.FC = () => {
               value={hoursFilter}
               onChange={e => setHoursFilter(e.target.value as any)}
             >
-              <option value="todos">Todos os Horários</option>
-              <option value="comercial">Horário Comercial</option>
-              <option value="fora">Fora do Horário</option>
+              <option value="todos" className="bg-[#1a1c24] text-white">Todos os Horários</option>
+              <option value="comercial" className="bg-[#1a1c24] text-white">Horário Comercial</option>
+              <option value="fora" className="bg-[#1a1c24] text-white">Fora do Horário</option>
             </select>
 
             <select
@@ -320,9 +320,9 @@ export const Leads: React.FC = () => {
               value={forwardFilter}
               onChange={e => setForwardFilter(e.target.value as any)}
             >
-              <option value="todos">Encaminhamento (Todos)</option>
-              <option value="encaminhado">Encaminhados</option>
-              <option value="nao_encaminhado">Não Encaminhados</option>
+              <option value="todos" className="bg-[#1a1c24] text-white">Encaminhamento (Todos)</option>
+              <option value="encaminhado" className="bg-[#1a1c24] text-white">Encaminhados</option>
+              <option value="nao_encaminhado" className="bg-[#1a1c24] text-white">Não Encaminhados</option>
             </select>
           </div>
         </div>
