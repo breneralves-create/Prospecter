@@ -202,19 +202,33 @@ export const Dashboard: React.FC = () => {
   }, [filteredLeads])
 
   const funnelData = useMemo(() => {
-    const statuses = [
-      { id: 'novo_contato', label: 'Novo', color: 'var(--primary-light)' },
-      { id: 'em_qualificacao', label: 'Qualif.', color: 'var(--warning)' },
-      { id: 'quente', label: 'Quente', color: 'var(--hot)' },
-      { id: 'encaminhado', label: 'Encam.', color: 'var(--primary)' },
-      { id: 'convertido', label: 'Conv.', color: 'var(--success)' },
-    ]
+    let novos = 0;
+    let qualificacao = 0;
+    let quentes = 0;
+    let encaminhados = 0;
+    let convertidos = 0;
 
-    return statuses.map(s => ({
-      name: s.label,
-      value: filteredLeads.filter(l => l.status === s.id).length,
-      fill: s.color
-    }))
+    filteredLeads.forEach(l => {
+      if (l.convertido || l.status === 'convertido') {
+        convertidos++;
+      } else if (l.encaminhado_vendedor || l.status === 'encaminhado') {
+        encaminhados++;
+      } else if (l.temperatura === 'quente' || l.status === 'quente') {
+        quentes++;
+      } else if (l.status === 'novo_contato' || l.status === 'fora_horario') {
+        novos++;
+      } else {
+        qualificacao++;
+      }
+    });
+
+    return [
+      { name: 'Novo', value: novos, fill: 'var(--primary-light)' },
+      { name: 'Qualif.', value: qualificacao, fill: 'var(--warning)' },
+      { name: 'Quente', value: quentes, fill: 'var(--hot)' },
+      { name: 'Encam.', value: encaminhados, fill: 'var(--primary)' },
+      { name: 'Conv.', value: convertidos, fill: 'var(--success)' },
+    ]
   }, [filteredLeads])
 
   const productsData = useMemo(() => {
