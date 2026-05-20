@@ -7,10 +7,8 @@ import {
 import type { DropResult } from '@hello-pangea/dnd'
 import { 
   Search,
-  Zap,
   Flame,
   User,
-  Phone,
   Tag
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -18,8 +16,6 @@ import { ptBR } from 'date-fns/locale'
 import { supabase, supabaseAdmin } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import type { Lead, LeadStatus } from '../types'
-import { Card } from '../components/ui/Card'
-import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
 import { DrawerLead } from '../components/Lead/DrawerLead'
 import { LeadModal } from '../components/Lead/LeadModal'
@@ -114,14 +110,6 @@ export const Funil: React.FC = () => {
 
   const getLeadsByStatus = (status: LeadStatus) => {
     return filteredLeads.filter(l => l.status === status)
-  }
-
-  const formatWhatsApp = (num: string) => {
-    const cleaned = num.replace(/\D/g, '')
-    if (cleaned.length === 11) {
-      return `(${cleaned.substring(0, 2)}) ${cleaned.substring(2, 7)}-${cleaned.substring(7)}`
-    }
-    return num
   }
 
   return (
