@@ -57,7 +57,8 @@ export const Funil: React.FC = () => {
       const { data, error } = await supabaseAdmin
         .from('leads')
         .select('*')
-        .in('status', COLUMNS.map(c => c.id))
+        .order('created_at', { ascending: false })
+        .limit(500) // Traz os mais recentes para não pesar
       
       if (error) throw error
       if (data) setLeads(data as Lead[])
@@ -78,11 +79,15 @@ export const Funil: React.FC = () => {
     const updatedLeads = [...leads]
     const leadIndex = updatedLeads.findIndex(l => l.id === draggableId)
     if (leadIndex !== -1) {
+      const isConvertido = newStatus === 'convertido';
+      const isEncaminhado = newStatus === 'encaminhado' ? true : updatedLeads[leadIndex].encaminhado_vendedor;
+      
       updatedLeads[leadIndex] = { 
         ...updatedLeads[leadIndex], 
         status: newStatus,
-        convertido: newStatus === 'convertido',
-        data_conversao: newStatus === 'convertido' ? new Date().toISOString() : updatedLeads[leadIndex].data_conversao
+        convertido: isConvertido,
+        encaminhado_vendedor: isEncaminhado,
+        data_conversao: isConvertido && !updatedLeads[leadIndex].convertido ? new Date().toISOString() : updatedLeads[leadIndex].data_conversao
       }
       setLeads(updatedLeads)
 
@@ -91,8 +96,9 @@ export const Funil: React.FC = () => {
           .from('leads')
           .update({ 
             status: newStatus,
-            convertido: newStatus === 'convertido',
-            data_conversao: newStatus === 'convertido' ? new Date().toISOString() : null
+            convertido: isConvertido,
+            encaminhado_vendedor: isEncaminhado,
+            data_conversao: isConvertido && !updatedLeads[leadIndex].convertido ? new Date().toISOString() : null
           })
           .eq('id', draggableId)
         
@@ -108,8 +114,22 @@ export const Funil: React.FC = () => {
     (l.whatsapp || '').includes(searchTerm)
   )
 
+  const getEffectiveStatus = (lead: Lead): LeadStatus => {
+    let s = lead.status;
+    
+    // Mapeamento de status legados/ocultos para as 5 colunas base
+    if (s === 'fora_horario' || s === 'primeiro_contato') s = 'novo_contato';
+    if (s === 'proposta_enviada' || s === 'quente' || s === 'morno' || s === 'frio' || s === 'sem_interesse') s = 'em_qualificacao';
+
+    // Prioridade para as flags booleanas se estiverem true
+    if (lead.convertido) return 'convertido';
+    if (lead.encaminhado_vendedor && s === 'novo_contato') return 'encaminhado';
+
+    return s;
+  }
+
   const getLeadsByStatus = (status: LeadStatus) => {
-    return filteredLeads.filter(l => l.status === status)
+    return filteredLeads.filter(l => getEffectiveStatus(l) === status)
   }
 
   return (
