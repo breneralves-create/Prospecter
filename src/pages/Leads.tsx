@@ -337,6 +337,9 @@ export const Leads: React.FC = () => {
                     <div className="flex items-center gap-2">Nome <ArrowUpDown size={12} /></div>
                   </th>
                   <th className="px-6 py-4">WhatsApp</th>
+                  <th className="px-6 py-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('cidade')}>
+                    <div className="flex items-center gap-2">Cidade <ArrowUpDown size={12} /></div>
+                  </th>
                   <th className="px-6 py-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('score')}>
                     <div className="flex items-center gap-2">Score <ArrowUpDown size={12} /></div>
                   </th>
@@ -368,6 +371,9 @@ export const Leads: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-xs text-text-muted font-medium">
                       {formatWhatsApp(lead.whatsapp)}
+                    </td>
+                    <td className="px-6 py-4 text-xs font-semibold text-text-main">
+                      {lead.cidade || <span className="text-text-muted opacity-30">—</span>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
