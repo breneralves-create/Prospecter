@@ -373,7 +373,13 @@ export const Leads: React.FC = () => {
                       {formatWhatsApp(lead.whatsapp)}
                     </td>
                     <td className="px-6 py-4 text-xs font-semibold text-text-main">
-                      {lead.cidade || <span className="text-text-muted opacity-30">—</span>}
+                      {lead.cidade ? (
+                        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                          {lead.cidade}
+                        </Badge>
+                      ) : (
+                        <span className="text-text-muted opacity-30">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
