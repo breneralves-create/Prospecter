@@ -9,10 +9,8 @@ import {
   Flame,
   Clock,
   Phone,
-  MapPin,
-  ChevronRight,
   ArrowUpRight,
-  Filter,
+  MapPin,
   CheckCircle2,
   AlertCircle,
   Zap,
@@ -25,7 +23,6 @@ import { supabaseAdmin } from '../lib/supabase'
 import { Layout } from '../components/layout/Layout'
 import { Input } from '../components/ui/Input'
 import { ScoreBar } from '../components/ui/ScoreBar'
-import { LeadTemperature } from '../components/ui/LeadTemperature'
 import { DrawerLead } from '../components/Lead/DrawerLead'
 import { LeadModal } from '../components/Lead/LeadModal'
 import type { Lead, Interacao } from '../types'
@@ -292,7 +289,7 @@ export const Conversas: React.FC = () => {
                       </div>
 
                       <p className={`text-xs truncate mb-2 leading-relaxed ${isActive ? 'text-text-main/80 font-medium' : 'text-text-muted/80'}`}>
-                        {lead.resumo_conversa || lead.motivo_contato || 'Aguardando interação...'}
+                        {lead.resumo_conversa || 'Aguardando interação...'}
                       </p>
 
                       <div className="flex items-center gap-2">
@@ -444,7 +441,7 @@ export const Conversas: React.FC = () => {
                 <div className="max-w-3xl mx-auto w-full space-y-6">
                   {interactions.map((msg, index) => {
                     const isLead = msg.tipo === 'mensagem_lead'
-                    const isSystem = msg.tipo === 'nota_vendedor' || msg.tipo === 'sistema'
+                    const isSystem = msg.tipo === 'nota_vendedor' || (msg.tipo as string) === 'sistema'
                     const showAvatar = index === 0 || interactions[index - 1].tipo !== msg.tipo
 
                     return (

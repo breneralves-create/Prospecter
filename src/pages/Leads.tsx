@@ -374,7 +374,7 @@ export const Leads: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-xs font-semibold text-text-main">
                       {lead.cidade ? (
-                        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        <Badge variant="muted" className="text-xs bg-primary/10 text-primary border-primary/20">
                           {lead.cidade}
                         </Badge>
                       ) : (
