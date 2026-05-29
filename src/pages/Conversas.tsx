@@ -644,9 +644,6 @@ export const Conversas: React.FC = () => {
                         <h4 className="text-xl font-black text-text-main font-heading">
                           {selectedLead.nome || formatWhatsApp(selectedLead.whatsapp)}
                         </h4>
-                        <p className="mt-2 text-sm text-text-muted leading-relaxed">
-                          Este lead ainda não tem mensagens do WhatsApp salvas no histórico. Quando a integração registrar mensagens em interacoes, elas aparecem aqui em balões automaticamente.
-                        </p>
                       </div>
                       {(() => {
                         const state = getConversationState(selectedLead, conversationMeta[selectedLead.id])
