@@ -9,7 +9,9 @@ import {
   Search,
   Flame,
   User,
-  Tag
+  Tag,
+  Sparkles,
+  RotateCcw
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -120,13 +122,11 @@ export const Funil: React.FC = () => {
     // Prioridade máxima para as flags booleanas
     if (lead.convertido) return 'convertido';
     if (lead.encaminhado_vendedor) return 'encaminhado';
+    if (lead.score && lead.score >= 80) return 'em_qualificacao';
+    if (lead.temperatura === 'quente' || lead.temperatura === 'morno' || lead.temperatura === 'frio') return 'em_qualificacao';
     // Mapeamento de status legados/ocultos
     if (s === 'fora_horario' || s === 'primeiro_contato' || s === 'conversando') s = 'novo_contato';
     else if (s === 'proposta_enviada' || s === 'quente' || s === 'morno' || s === 'frio' || s === 'sem_interesse') s = 'em_qualificacao';
-
-    if (s === 'novo_contato') return 'novo_contato';
-    if (lead.score && lead.score >= 80) return 'em_qualificacao';
-    if (lead.temperatura === 'quente' || lead.temperatura === 'morno' || lead.temperatura === 'frio') return 'em_qualificacao';
 
     const validCols = ['novo_contato', 'em_qualificacao', 'follow_up', 'encaminhado', 'convertido'];
     if (!validCols.includes(s)) {
@@ -134,6 +134,19 @@ export const Funil: React.FC = () => {
     }
 
     return s as LeadStatus;
+  }
+
+  const isFirstContact = (lead: Lead) => {
+    const status = lead.status || 'novo_contato'
+    return status === 'novo_contato' || status === 'primeiro_contato' || status === 'conversando'
+  }
+
+  const getDisplayTemperature = (lead: Lead) => {
+    if (lead.temperatura) return lead.temperatura
+    const score = lead.score || 0
+    if (score >= 80) return 'quente'
+    if (score >= 40) return 'morno'
+    return 'frio'
   }
 
   const getLeadsByStatus = (status: LeadStatus) => {
@@ -235,10 +248,19 @@ export const Funil: React.FC = () => {
                                     <span className="truncate">{lead.produto_interesse || 'Nenhum produto listado'}</span>
                                   </div>
 
+                                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wide ${
+                                    isFirstContact(lead)
+                                      ? 'bg-primary/10 border-primary/20 text-primary'
+                                      : 'bg-bg-base border-border-card text-text-muted'
+                                  }`}>
+                                    {isFirstContact(lead) ? <Sparkles size={11} /> : <RotateCcw size={11} />}
+                                    {isFirstContact(lead) ? '1o contato' : 'Cliente recorrente'}
+                                  </div>
+
                                   {/* Badges Info */}
                                   <div className="flex items-center justify-between pt-2 mt-2 border-t border-[#2b2d35]">
                                     <div className="flex items-center gap-2">
-                                      <LeadTemperature temperature={lead.temperatura} className="text-[10px] py-0.5 px-1.5 h-auto rounded" />
+                                      <LeadTemperature temperature={getDisplayTemperature(lead)} className="text-[10px] py-0.5 px-1.5 h-auto rounded" />
                                     </div>
                                     <div className="text-[10px] text-text-muted flex flex-col items-end">
                                       <span className="font-semibold text-text-main/70">{lead.score || 0}% Score</span>
