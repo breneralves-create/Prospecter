@@ -38,6 +38,10 @@ const isDueDate = (dateStr: string | null | undefined) => {
   return date.getTime() <= Date.now()
 }
 
+const isFollowUpSent = (lead: Lead) => {
+  return lead.followup_1enviado?.trim().toLowerCase() === 'feito'
+}
+
 export const Funil: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([])
   const [dueFollowUpLeadIds, setDueFollowUpLeadIds] = useState<Set<string>>(new Set())
@@ -144,6 +148,7 @@ export const Funil: React.FC = () => {
     // Prioridade máxima para as flags booleanas
     if (lead.convertido) return 'convertido';
     if (lead.encaminhado_vendedor) return 'encaminhado';
+    if (isFollowUpSent(lead)) return 'follow_up';
     if ((s === 'follow_up' && !lead.data_follow_up) || isDueDate(lead.data_follow_up) || dueFollowUpLeadIds.has(lead.id)) return 'follow_up';
     if (s === 'follow_up') s = 'novo_contato';
     if (lead.score && lead.score >= 80) return 'em_qualificacao';
