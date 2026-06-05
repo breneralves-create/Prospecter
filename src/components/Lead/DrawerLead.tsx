@@ -114,22 +114,42 @@ export const DrawerLead: React.FC<DrawerLeadProps> = ({
     setBotLoading(true)
     setBotError(null)
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ whatsapp: lead.whatsapp, ativo: ativar })
+      const payload = new URLSearchParams({
+        whatsapp: lead.whatsapp,
+        ativo: String(ativar)
       })
-      const result = await response.json().catch(() => null)
 
-      if (!response.ok || result?.success === false) {
-        throw new Error(result?.message || 'Erro ao alterar status do bot')
+      try {
+        const response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          body: payload
+        })
+        const responseText = await response.text()
+        let result: { success?: boolean; message?: string } | null = null
+        try {
+          result = responseText ? JSON.parse(responseText) : null
+        } catch {
+          result = null
+        }
+
+        if (!response.ok || result?.success === false) {
+          throw new Error(result?.message || 'Erro ao alterar status do bot')
+        }
+      } catch (webhookError) {
+        console.warn('Webhook do agente indisponivel, atualizando direto no Supabase:', webhookError)
       }
 
+      const { error } = await supabaseAdmin
+        .from('leads')
+        .update({ bot_ativo: ativar })
+        .eq('id', lead.id)
+
+      if (error) throw error
       setBotAtivo(ativar)
       if (onUpdate) onUpdate()
     } catch (error) {
       console.error('Erro ao alterar bot:', error)
-      setBotError('Nao foi possivel alterar o agente. Tente novamente.')
+      setBotError(error instanceof Error ? error.message : 'Nao foi possivel alterar o agente. Tente novamente.')
     } finally {
       setBotLoading(false)
     }

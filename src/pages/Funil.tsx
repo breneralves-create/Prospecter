@@ -31,8 +31,16 @@ const COLUMNS: { id: LeadStatus; title: string, hexColor: string }[] = [
   { id: 'convertido', title: 'Convertido', hexColor: '#10b981' }
 ]
 
+const isDueDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return false
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return false
+  return date.getTime() <= Date.now()
+}
+
 export const Funil: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([])
+  const [dueFollowUpLeadIds, setDueFollowUpLeadIds] = useState<Set<string>>(new Set())
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -40,6 +48,7 @@ export const Funil: React.FC = () => {
 
   useEffect(() => {
     fetchHotLeads()
+    const refreshInterval = window.setInterval(fetchHotLeads, 60000)
     
     // Real-time subscription for leads
     const subscription = supabase
@@ -47,9 +56,13 @@ export const Funil: React.FC = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
         fetchHotLeads()
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'follow_ups' }, () => {
+        fetchHotLeads()
+      })
       .subscribe()
 
     return () => {
+      window.clearInterval(refreshInterval)
       subscription.unsubscribe()
     }
   }, [])
@@ -64,6 +77,15 @@ export const Funil: React.FC = () => {
       
       if (error) throw error
       if (data) setLeads(data as Lead[])
+
+      const { data: followUps, error: followUpError } = await supabaseAdmin
+        .from('follow_ups')
+        .select('lead_id, agendado_para')
+        .eq('realizado', false)
+        .lte('agendado_para', new Date().toISOString())
+
+      if (followUpError) throw followUpError
+      setDueFollowUpLeadIds(new Set((followUps || []).map((followUp) => followUp.lead_id as string)))
     } catch (err) {
       console.error('Erro ao buscar leads:', err)
     }
@@ -122,6 +144,8 @@ export const Funil: React.FC = () => {
     // Prioridade máxima para as flags booleanas
     if (lead.convertido) return 'convertido';
     if (lead.encaminhado_vendedor) return 'encaminhado';
+    if ((s === 'follow_up' && !lead.data_follow_up) || isDueDate(lead.data_follow_up) || dueFollowUpLeadIds.has(lead.id)) return 'follow_up';
+    if (s === 'follow_up') s = 'novo_contato';
     if (lead.score && lead.score >= 80) return 'em_qualificacao';
     if (lead.temperatura === 'quente' || lead.temperatura === 'morno' || lead.temperatura === 'frio') return 'em_qualificacao';
     // Mapeamento de status legados/ocultos
@@ -254,7 +278,7 @@ export const Funil: React.FC = () => {
                                       : 'bg-bg-base border-border-card text-text-muted'
                                   }`}>
                                     {isFirstContact(lead) ? <Sparkles size={11} /> : <RotateCcw size={11} />}
-                                    {isFirstContact(lead) ? '1o contato' : 'Cliente recorrente'}
+                                    {isFirstContact(lead) ? 'Primeiro contato' : 'Cliente recorrente'}
                                   </div>
 
                                   {/* Badges Info */}
